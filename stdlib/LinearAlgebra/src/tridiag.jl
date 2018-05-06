@@ -161,10 +161,13 @@ function mul!(C::StridedVecOrMat, S::SymTridiagonal, B::StridedVecOrMat)
     β = S.ev
     @inbounds begin
         for j = 1:n
-            x₀, x₊ = B[1, j], B[2, j]
-            β₀ = β[1]
-            C[1, j] = α[1]*x₀ + x₊*β₀
-            for i = 2:m - 1
+            x₊ = B[1, j]
+            x₀ = zero(x₊)
+            # β[1] is out of bounds if n=1 but is safe because of the call
+            # to zero. In most cases, the memory access will be completely
+            # avoided.
+            β₀ = zero(β[1])
+            for i = 1:m - 1
                 x₋, x₀, x₊ = x₀, x₊, B[i + 1, j]
                 β₋, β₀ = β₀, β[i]
                 C[i, j] = β₋*x₋ + α[i]*x₀ + β₀*x₊
